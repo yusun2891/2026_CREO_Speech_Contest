@@ -425,7 +425,7 @@ td.action-cell{width:96px;text-align:right;padding-right:22px}
         <div id="catCards"></div>
         <div class="score-footer">
           <div class="score-footer-inner">
-            <span class="footer-avg">Average<b id="footerAvg">—</b><span class="out"> / 10</span></span>
+            <span class="footer-avg">Total<b id="footerAvg">—</b><span class="out"> / 40</span></span>
             <div class="footer-btns">
               <button class="cancel-btn" onclick="backToList()">Cancel</button>
               <button class="save-btn" id="saveBtn" onclick="saveCurrentScore()">Save Score</button>
@@ -655,6 +655,12 @@ function studentAvg(no){
   if(vals.length<4) return null;
   return (vals.reduce((a,b)=>a+b,0)/4);
 }
+function studentTotal(no){
+  const s=state.localScores[no]||{};
+  const vals=CATS.map(c=>Number(s[c.key])).filter(v=>!isNaN(v)&&v>0);
+  if(vals.length<4) return null;
+  return vals.reduce((a,b)=>a+b,0);
+}
 
 function renderRoster(){
   const q=(document.getElementById('searchBox').value||'').toLowerCase().trim();
@@ -684,12 +690,12 @@ function renderRoster(){
 
   host.innerHTML=items.map(st=>{
     const done=isDone(st.no);
-    const avg=studentAvg(st.no);
+    const total=studentTotal(st.no);
     const btn = done
       ? `<button class="row-btn edit" onclick="openScore('${st.no}')">Edit Score</button>`
       : `<button class="row-btn score" onclick="openScore('${st.no}')">Enter Score</button>`;
     const status = done
-      ? `<span class="row-avg">Your avg <b>${avg.toFixed(2)}</b><span class="out">/10</span></span>`
+      ? `<span class="row-avg">Total <b>${total}</b><span class="out">/40</span></span>`
       : `<span class="status-chip todo">Not scored</span>`;
     return `<div class="rrow ${done?'done':'todo'}">
       <div class="idx">${esc(st.no)}</div>
@@ -770,7 +776,7 @@ function pickScore(key,n){
 function updateFooterAvg(){
   const vals=CATS.map(c=>state.draft[c.key]).filter(v=>v!=null);
   const el=document.getElementById('footerAvg');
-  el.textContent = vals.length<4 ? '—' : (vals.reduce((a,b)=>a+b,0)/4).toFixed(2);
+  el.textContent = vals.length<4 ? '—' : vals.reduce((a,b)=>a+b,0);
 }
 
 function backToList(){
