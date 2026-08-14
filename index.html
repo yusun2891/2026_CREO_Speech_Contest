@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Contest Scoring</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  /* T!kitaka-inspired palette */
+  --navy:#4b5be8;         /* primary cobalt blue */
+  --navy2:#3f4ed6;        /* darker hover */
+  --ink:#2b2f45;          /* main text */
+  --blue-deep:#3a49c9;
+  --gold:#5cc4cf;         /* teal accent (repurposed) */
+  --gold-soft:#8fdbe2;    /* light teal */
+  --teal:#5cc4cf; --teal-deep:#3fb3bf; --teal-soft:#d4eff1;
+  --paper:#f3f6fd;        /* soft blue-tinted bg */
+  --card:#ffffff; --line:#e6ebf5;
+  --muted:#8a90a6; --green:#5cc4cf; --green-soft:#e2f4f6;
+  --red:#e5606a; --ok:#3fb3bf;
+  --shadow:0 8px 28px rgba(75,91,232,.10);
+  --shadow-soft:0 4px 18px rgba(75,91,232,.07);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  background:var(--paper); color:var(--ink); line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit}
+.hidden{display:none !important}
+
+/* ---------- Login ---------- */
+.login-wrap{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg, #5b6bf0 0%, #4b5be8 45%, #3a49c9 100%);
+  padding:24px;
+}
+.login-card{
+  width:100%;max-width:400px;background:var(--card);border-radius:26px;
+  padding:40px 34px;box-shadow:0 24px 70px rgba(40,50,120,.30);
+}
+.brand{text-align:center;margin-bottom:28px}
+.brand .kicker{
+  font-size:11px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--teal);font-weight:700;margin-bottom:10px;
+}
+.brand h1{font-size:24px;margin:0;color:var(--navy);letter-spacing:-.02em;font-weight:800}
+.brand .trophy{font-size:34px;margin-bottom:6px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.field input{
+  width:100%;padding:14px 16px;border:1.5px solid var(--line);border-radius:14px;
+  font-size:15px;background:#f7f9fe;transition:border .15s,box-shadow .15s;
+}
+.field input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(75,91,232,.14);background:#fff}
+.btn{
+  width:100%;padding:15px;border:none;border-radius:16px;font-size:15px;font-weight:700;
+  background:var(--navy);color:#fff;letter-spacing:.01em;transition:transform .08s,background .15s;
+}
+.btn:hover{background:var(--navy2)}
+.btn:active{transform:translateY(1px)}
+.btn.gold{background:var(--teal);color:#fff}
+.btn.gold:hover{background:var(--teal-deep)}
+.btn.ghost{background:transparent;color:var(--navy);border:1.5px solid var(--line)}
+.btn.ghost:hover{background:#eef1fb}
+.err{color:var(--red);font-size:13px;margin-top:10px;text-align:center;min-height:18px}
+
+/* ---------- App shell ---------- */
+.topbar{
+  background:var(--navy);color:#fff;padding:0 20px;height:62px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:20;box-shadow:0 4px 16px rgba(75,91,232,.22);
+}
+.topbar .left{display:flex;align-items:center;gap:12px}
+.topbar .logo{font-weight:800;letter-spacing:-.01em;font-size:17px}
+.topbar .logo .g{color:var(--gold-soft)}
+.badge{
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.18);color:#fff;
+}
+.topbar .right{display:flex;align-items:center;gap:14px}
+.who{font-size:13px;color:#d7dcfa}
+.logout{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;
+  padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600}
+.logout:hover{background:rgba(255,255,255,.22)}
+
+.container{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
+
+/* tabs (master) */
+.tabs{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap}
+.tab{
+  padding:11px 20px;border-radius:999px;border:1.5px solid var(--line);background:#fff;
+  font-size:14px;font-weight:600;color:var(--muted);
+}
+.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* ---------- Judge: toolbar / filters ---------- */
+.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.search{
+  flex:1;min-width:220px;padding:13px 18px;border:1.5px solid var(--line);
+  border-radius:14px;font-size:14px;background:#fff;
+}
+.search:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(75,91,232,.12)}
+.pill-filter{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:9px 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;
+  font-size:13px;font-weight:600;color:var(--muted)}
+.pill.active{background:var(--teal);border-color:var(--teal);color:#fff}
+
+.progress-line{font-size:13px;color:var(--muted);margin-bottom:16px}
+.progress-line b{color:var(--navy)}
+
+/* ---------- Judge: student list rows ---------- */
+.roster{display:grid;gap:12px}
+.rrow{
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:18px 22px;display:flex;align-items:center;gap:18px;box-shadow:var(--shadow-soft);
+  transition:box-shadow .15s,transform .1s;
+}
+.rrow:hover{box-shadow:var(--shadow)}
+.rrow.done{border-left:5px solid var(--ok)}
+.rrow.todo{border-left:5px solid var(--line)}
+.rrow .idx{font-size:13px;font-weight:800;color:#b6bccb;width:30px;flex:none;text-align:center}
+.rrow .info{flex:1;min-width:0}
+.rrow .name-row{display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.rrow .rname{font-size:16.5px;font-weight:700;color:var(--navy);letter-spacing:-.01em}
+.rrow .rname .kor{color:var(--muted);font-weight:500;font-size:13px;margin-left:7px}
+.rrow .tags{display:flex;gap:6px;flex-wrap:wrap}
+.rrow .rstatus{flex:none;display:flex;align-items:center;gap:14px}
+.row-result{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.row-avg{font-size:12px;color:var(--muted);white-space:nowrap}
+.row-avg b{color:var(--navy);font-size:15px;margin-left:3px}
+.row-avg .out{font-size:11px;color:#b6bccb;margin-left:1px}
+.status-chip{font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;white-space:nowrap}
+.status-chip.done{background:var(--green-soft);color:var(--ok)}
+.status-chip.todo{background:#eef1f8;color:var(--muted)}
+.row-btn{
+  padding:11px 20px;border-radius:999px;border:none;font-size:13px;font-weight:700;white-space:nowrap;
+}
+.row-btn.score{background:var(--navy);color:#fff}
+.row-btn.score:hover{background:var(--navy2)}
+.row-btn.edit{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+.row-btn.edit:hover{background:#eef1fb}
+
+/* ---------- Judge: scoring screen ---------- */
+.score-screen{max-width:760px;margin:0 auto}
+.back-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+
+/* list header + rubric button */
+.list-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.list-title h2{margin:0;color:var(--navy);font-size:22px;letter-spacing:-.01em;font-weight:800}
+.list-title .list-sub{font-size:13px;color:var(--muted)}
+.rubric-btn{
+  background:#fff;border:1.5px solid var(--teal);border-radius:999px;padding:11px 20px;
+  font-size:14px;font-weight:700;color:var(--teal-deep);white-space:nowrap;transition:.12s;
+}
+.rubric-btn:hover{background:var(--teal);color:#fff}
+.back-btn{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:10px 18px;font-size:14px;font-weight:600;color:var(--navy);display:inline-flex;align-items:center;gap:6px}
+.back-btn:hover{background:#eef1fb}
+.student-header{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px 26px;box-shadow:var(--shadow-soft);margin-bottom:20px}
+.student-header h2{margin:0;color:var(--navy);font-size:22px;font-weight:800}
+.student-header h2 .kor{color:var(--muted);font-weight:600;font-size:16px;margin-left:8px}
+.sh-tags{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}
+.sh-tags .tag.no{background:#eef1f8;color:var(--muted)}
+.sh-topic{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:14px;color:#4a4f66}
+.sh-topic .lab{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;display:block;margin-bottom:3px}
+
+.rubric-note{font-size:12.5px;color:var(--muted);margin-bottom:16px;text-align:center}
+.rubric-note b{color:var(--navy)}
+
+.cat-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px 24px;box-shadow:var(--shadow-soft);margin-bottom:14px}
+.cat-card .cat-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;height:34px}
+.cat-card .cat-name{font-size:16px;font-weight:700;color:var(--navy);line-height:1.2}
+.cat-card .cat-val{font-size:26px;font-weight:800;color:var(--teal-deep);line-height:34px;height:34px;text-align:right;min-width:30px}
+.cat-card .cat-val.empty{color:var(--line)}
+.scale{display:grid;grid-template-columns:repeat(10,1fr);gap:7px}
+.scale button{
+  border:1.5px solid var(--line);background:#fff;border-radius:12px;height:48px;
+  font-size:15px;font-weight:700;color:var(--navy);transition:.1s;
+}
+.scale button:hover{border-color:var(--teal);background:var(--teal-soft)}
+.scale button.sel{background:var(--teal);color:#fff;border-color:var(--teal)}
+.scale-legend{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:9px;padding:0 2px}
+
+.score-footer{
+  position:sticky;bottom:0;background:linear-gradient(transparent,var(--paper) 30%);
+  padding:18px 0 4px;margin-top:8px;
+}
+.score-footer-inner{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:var(--shadow)}
+.footer-avg{font-size:14px;color:var(--muted)}
+.footer-avg b{font-size:24px;color:var(--navy);margin-left:8px}
+.footer-avg .out{font-size:13px;color:var(--muted);font-weight:400}
+.footer-btns{display:flex;gap:10px}
+.save-btn{padding:14px 32px;border:none;border-radius:999px;background:var(--navy);color:#fff;font-weight:700;font-size:15px}
+.save-btn:hover{background:var(--navy2)}
+.save-btn:disabled{opacity:.6}
+.cancel-btn{padding:14px 24px;border:1.5px solid var(--line);border-radius:999px;background:#fff;color:var(--navy);font-weight:600;font-size:15px}
+.cancel-btn:hover{background:#eef1fb}
+
+/* ---------- Master: results (unchanged) ---------- */
+.campus-tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+
+/* ranking view switch */
+.view-switch{margin-bottom:22px}
+.view-switch-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:9px}
+.view-modes{display:inline-flex;gap:4px;background:#e4e9f7;padding:5px;border-radius:16px}
+.vmode{
+  padding:11px 22px;border-radius:12px;border:none;background:transparent;
+  font-size:14px;font-weight:700;color:var(--muted);transition:.15s;white-space:nowrap;
+}
+.vmode:hover{color:var(--navy)}
+.vmode.active{background:#fff;color:var(--navy);box-shadow:0 3px 10px rgba(75,91,232,.14)}
+.group-gap{margin-top:8px}
+
+/* grade filter within campus view */
+.grade-filter{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.grade-filter-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.gf-pills{display:flex;gap:7px;flex-wrap:wrap}
+.gf-pill{padding:10px 18px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:600;color:var(--muted);transition:.12s}
+.gf-pill:hover{border-color:var(--teal);color:var(--navy)}
+.gf-pill.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.summary-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.sumcard{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow-soft)}
+.sumcard .n{font-size:28px;font-weight:800;color:var(--navy)}
+.sumcard .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+.rank-table-wrap{background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:var(--shadow-soft);margin-bottom:26px}
+.rank-title{padding:18px 24px;background:var(--navy);color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px}
+.rank-title .campus-name{color:var(--gold-soft)}
+.rank-title .cnt{margin-left:auto;font-size:12px;font-weight:600;color:#d0d6fa;background:rgba(255,255,255,.14);padding:5px 13px;border-radius:999px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left}
+th{background:#f4f7fd;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;cursor:pointer;user-select:none;white-space:nowrap;padding:14px 18px;border-bottom:2px solid var(--line)}
+th:hover{color:var(--navy)}
+th .arrow{color:var(--teal-deep);margin-left:3px;font-size:10px}
+tbody td{padding:15px 18px;border-bottom:1px solid #eef1f8;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#f7f9fe}
+
+/* rank badge */
+td.rank{width:64px}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;font-weight:800;font-size:15px;background:#eef1f8;color:var(--muted)}
+.rank-badge.medal{font-size:19px;background:transparent;width:auto;height:auto}
+tr.rk1 .rank-badge{background:linear-gradient(135deg,#f6e3a8,#d9b84e);color:#5c470f}
+tr.rk2 .rank-badge{background:linear-gradient(135deg,#eef0f2,#c3c9d1);color:#4a4f58}
+tr.rk3 .rank-badge{background:linear-gradient(135deg,#f0d9c4,#cf9d72);color:#5a3a1e}
+tr.rk1{background:linear-gradient(90deg,rgba(92,196,207,.10),transparent 60%)}
+
+/* student cell */
+.name-cell .en{font-weight:700;font-size:15.5px;color:var(--navy);letter-spacing:-.01em}
+.name-cell .ko{color:var(--muted);font-weight:500;font-size:13px;margin-left:7px}
+.name-cell .tags{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;background:#eef1f8;color:#5b5f6e;white-space:nowrap}
+.tag.lv{background:#e4ecfb;color:#4257a8}
+.tag.gr{background:#e2f4f6;color:#2f8b95}
+.tag.tc{background:#eef1f8;color:#6b7089}
+.tag.cp{background:#e2f4f6;color:#2f8b95}
+
+/* score cell */
+td.total{width:150px}
+.total-val{font-weight:800;font-size:20px;color:var(--navy);line-height:1}
+.total-out{font-size:12px;color:var(--muted);font-weight:500}
+.total-bar{height:6px;border-radius:3px;background:#eef1f8;margin-top:7px;overflow:hidden;max-width:130px}
+.total-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--teal),var(--gold-soft))}
+
+.judges-cell{width:96px}
+.judges-pill{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.judges-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.judges-pill.partial .dot{background:var(--teal)}
+.judges-pill.none .dot{background:#c7cdda}
+
+td.action-cell{width:96px;text-align:right;padding-right:22px}
+.detail-btn{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 16px;font-size:12.5px;font-weight:700;color:var(--navy);transition:.12s}
+.detail-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.notscored-tag{font-size:12px;color:#b6bccb;font-style:italic}
+.name-cell b{color:var(--navy)}
+.name-cell span{color:var(--muted);font-size:12px}
+.count-cell{color:var(--muted);font-size:12px}
+.acct-table-wrap{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-soft);max-width:560px}
+.pw-cell{font-family:"SF Mono",Consolas,monospace;font-weight:700;color:var(--navy);letter-spacing:.04em}
+.role-chip{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px}
+.role-chip.master{background:#e4ecfb;color:#4257a8}
+.role-chip.judge{background:var(--green-soft);color:var(--ok)}
+.upload-box{background:#fff;border:1px dashed var(--teal);border-radius:20px;padding:26px;text-align:center;box-shadow:var(--shadow-soft);max-width:620px}
+.upload-box h3{margin:0 0 8px;color:var(--navy)}
+.upload-box p{color:var(--muted);font-size:13.5px;margin:6px 0 18px}
+.file-label{display:inline-block;padding:12px 24px;background:var(--teal);color:#fff;border-radius:999px;font-weight:700;font-size:14px}
+.file-label:hover{background:var(--gold-soft)}
+.up-note{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.6}
+.modal-bg{position:fixed;inset:0;background:rgba(40,50,90,.5);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal{background:#fff;border-radius:24px;max-width:680px;width:100%;max-height:86vh;overflow:auto;box-shadow:0 30px 80px rgba(40,50,90,.35)}
+.modal-head{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff}
+.modal-head h3{margin:0;color:var(--navy)}
+.modal-close{background:transparent;border:none;font-size:24px;color:var(--muted);line-height:1}
+.modal-body{padding:20px 24px}
+
+/* ---- detail modal ---- */
+.detail-tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.detail-topic{background:#f4f7fd;border:1px solid var(--line);border-radius:14px;padding:14px 18px;font-size:14px;color:#4a4f66;margin-bottom:18px}
+.detail-topic .lab{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-bottom:3px}
+.detail-table{font-size:13.5px}
+.detail-table th{padding:10px 12px;text-align:center;cursor:default;border-bottom:2px solid var(--line)}
+.detail-table th:first-child{text-align:left}
+.detail-table td{padding:11px 12px;text-align:center;border-bottom:1px solid #eef1f8;vertical-align:middle}
+.detail-table td:first-child{text-align:left}
+.detail-table tbody tr:hover{background:#f7f9fe}
+.detail-table tfoot td{background:#f4f7fd;border-top:2px solid var(--line);border-bottom:none;padding:13px 12px;text-align:center}
+.detail-table tfoot td:first-child{text-align:right}
+
+/* ---- rubric modal ---- */
+.modal.rubric{max-width:820px}
+.rubric-banner{background:var(--navy);color:#fff;padding:20px 24px;text-align:center;position:sticky;top:0;z-index:2}
+.rubric-banner h2{margin:0;font-size:19px;letter-spacing:-.01em;font-weight:800}
+.rubric-banner .close-x{position:absolute;right:16px;top:16px;background:rgba(255,255,255,.16);border:none;color:#fff;width:32px;height:32px;border-radius:999px;font-size:20px;line-height:1}
+.rubric-banner .close-x:hover{background:rgba(255,255,255,.28)}
+.guidelines{background:#eef3fd;border-bottom:1px solid var(--line);padding:16px 24px;font-size:13px;color:#4a5170}
+.guidelines .g-item{margin-bottom:8px}
+.guidelines .g-item:last-child{margin-bottom:0}
+.guidelines b{color:var(--navy)}
+.rubric-cats{padding:8px 20px 24px}
+.rcat{margin-top:20px}
+.rcat h4{margin:0 0 8px;font-size:15px;font-weight:800;color:var(--navy);padding:10px 16px;border-radius:12px}
+.rcat.c1 h4{background:#dff2f4;color:#2f8b95}
+.rcat.c2 h4{background:#e4ecfb;color:#4257a8}
+.rcat.c3 h4{background:#e2eefb;color:#3a6bb0}
+.rcat.c4 h4{background:#eae7fb;color:#5b52a8}
+.rtable{width:100%;border-collapse:collapse;font-size:12.5px}
+.rtable td{padding:7px 10px;border-bottom:1px solid #f0f2f9;vertical-align:top}
+.rtable td.sc{width:38px;text-align:center;font-weight:800;color:var(--navy);background:#f4f7fd}
+.rtable tr:hover td{background:#f7f9fe}
+.rtable tr:hover td.sc{background:#e9eefb}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--navy);color:#fff;padding:14px 24px;border-radius:14px;font-weight:600;font-size:14px;
+  box-shadow:0 12px 34px rgba(75,91,232,.34);opacity:0;transition:.3s;z-index:100}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.err{background:var(--red)}
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty .ic{font-size:44px;margin-bottom:12px}
+.loading{text-align:center;padding:50px;color:var(--muted)}
+
+@media(max-width:640px){
+  .container{padding:16px 14px 50px}
+  .scale{grid-template-columns:repeat(5,1fr)}
+  .rrow{flex-wrap:wrap}
+  .rrow .rstatus{width:100%;justify-content:space-between;margin-top:6px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginView" class="login-wrap">
+  <div class="login-card">
+    <div class="brand">
+      <div class="trophy">🏆</div>
+      <div class="kicker">Speech Contest</div>
+      <h1>Judge &amp; Master Scoring</h1>
+    </div>
+    <div class="field">
+      <label>Username</label>
+      <input id="loginUser" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. judge1 or master">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input id="loginPass" type="password" autocomplete="new-password" placeholder="Enter your password">
+    </div>
+    <button class="btn" onclick="doLogin()">Log In</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="appView" class="hidden">
+  <div class="topbar">
+    <div class="left">
+      <span class="logo">Speech<span class="g">Score</span></span>
+      <span class="badge" id="roleBadge">Judge</span>
+    </div>
+    <div class="right">
+      <span class="who" id="whoLabel"></span>
+      <button class="logout" id="logoutBtn" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- ================= JUDGE: LIST ================= -->
+    <div id="judgeListView" class="hidden">
+      <div class="list-head">
+        <div class="list-title">
+          <h2>Students</h2>
+          <span class="list-sub">Select a student to enter or edit their scores.</span>
+        </div>
+        <button class="rubric-btn" onclick="openRubric()">📋 Judging Rubric</button>
+      </div>
+      <div class="toolbar">
+        <input class="search" id="searchBox" placeholder="Search by student name…" oninput="renderRoster()">
+        <div class="pill-filter" id="campusFilter">
+          <button class="pill active" data-c="ALL" onclick="setCampusFilter('ALL')">All Campuses</button>
+          <button class="pill" data-c="Songpa" onclick="setCampusFilter('Songpa')">🔵 Songpa</button>
+          <button class="pill" data-c="Hanam" onclick="setCampusFilter('Hanam')">🟢 Hanam</button>
+          <button class="pill" data-c="Daechi" onclick="setCampusFilter('Daechi')">🟠 Daechi</button>
+        </div>
+      </div>
+      <div class="progress-line" id="progressLine"></div>
+      <div class="roster" id="roster"></div>
+    </div>
+
+    <!-- ================= JUDGE: SCORE SCREEN ================= -->
+    <div id="judgeScoreView" class="hidden">
+      <div class="score-screen">
+        <div class="back-bar">
+          <button class="back-btn" onclick="backToList()">← Back to list</button>
+          <button class="rubric-btn" onclick="openRubric()">📋 Judging Rubric</button>
+        </div>
+        <div class="student-header" id="scoreStudentHeader"></div>
+        <div class="rubric-note">Rate each category from <b>1</b> to <b>10</b> &nbsp;·&nbsp; 1–4 Poor · 5–6 Average · 7–8 Good · 9–10 Excellent</div>
+        <div id="catCards"></div>
+        <div class="score-footer">
+          <div class="score-footer-inner">
+            <span class="footer-avg">Average<b id="footerAvg">—</b><span class="out"> / 10</span></span>
+            <div class="footer-btns">
+              <button class="cancel-btn" onclick="backToList()">Cancel</button>
+              <button class="save-btn" id="saveBtn" onclick="saveCurrentScore()">Save Score</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MASTER: results ================= -->
+    <div id="resultsView" class="hidden">
+      <div class="summary-cards" id="summaryCards"></div>
+      <div class="view-switch">
+        <div class="view-switch-label">Ranking view</div>
+        <div class="view-modes" id="viewModes">
+          <button class="vmode active" data-m="overall" onclick="setViewMode('overall')">🏆 Overall</button>
+          <button class="vmode" data-m="campus" onclick="setViewMode('campus')">🏫 By Campus</button>
+          <button class="vmode" data-m="grade" onclick="setViewMode('grade')">🎓 By Grade</button>
+        </div>
+      </div>
+      <div id="rankTables"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="modalHost"></div>
+
+<script>
+/* ==========================================================
+   CONFIG — paste your Apps Script Web App URL here
+   ========================================================== */
+const API_URL = "https://script.google.com/macros/s/AKfycbwvhsILK9sx3_aK4NGBwsieQWSWPw98NJbe8bRhfmwOZ2EmFV-vCEVJJ-ngt-gsy2l6/exec";
+
+let state = {
+  user:null, role:null,
+  students:[], scores:[],
+  campusFilter:'ALL',
+  viewMode:'overall',   // 'overall' | 'campus' | 'grade'
+  gradeFilter:'ALL',    // 'ALL' | 'low' | 'upper' — used in campus view
+  sortKey:'total', sortDir:'desc',
+  localScores:{},      // { studentNo: {clarity,energy,nonverbal,creative} }
+  editing:null,        // studentNo currently on the score screen
+  draft:{},            // scores being edited on the score screen
+};
+const CATS = [
+  {key:'clarity',   label:'Clarity & Pace'},
+  {key:'energy',    label:'Energy & Intonation'},
+  {key:'nonverbal', label:'Non-Verbal Delivery'},
+  {key:'creative',  label:'Creative Content'},
+];
+const CAMPUSES = ['Songpa','Hanam','Daechi'];
+const CAMPUS_EMOJI = {Songpa:'🔵', Hanam:'🟢', Daechi:'🟠'};
+function campusEmoji(c){ return CAMPUS_EMOJI[String(c).trim()] || '🏫'; }
+function campusLabel(c){ return `${campusEmoji(c)} ${esc(c)}`; }
+
+/* ---- Judging rubric (1–10 descriptors per category) ---- */
+const RUBRIC = [
+  { cls:'c1', title:'1. Clarity & Pace', rows:[
+    [10,'Speech is crystal clear, well-articulated, and paced naturally throughout.'],
+    [9,'Mostly clear with only rare slips in pronunciation or pacing.'],
+    [8,'Clear overall but with a few minor moments of unclear words or uneven speed.'],
+    [7,'Understandable, though occasional unclear words or noticeable pacing issues occur.'],
+    [6,'Speech is somewhat clear, but several words/phrases are hard to catch.'],
+    [5,'Meaning is generally understandable but clarity/pacing distracts at times.'],
+    [4,'Frequent clarity or pacing issues make the speech difficult to follow.'],
+    [3,'Very unclear or rushed/slow pace in large sections.'],
+    [2,'Largely incomprehensible or extremely uneven pacing.'],
+    [1,'Nearly impossible to understand due to clarity and pace.'],
+  ]},
+  { cls:'c2', title:'2. Energy & Intonation', rows:[
+    [10,'Excellent energy, expressive tone, and varied intonation keep the audience fully engaged.'],
+    [9,'Very strong energy with occasional minor flat spots.'],
+    [8,'Clear effort to use expression and tone; mostly engaging.'],
+    [7,'Some variety in intonation, though energy drops at times.'],
+    [6,'Limited variation; delivery feels a bit flat but still shows effort.'],
+    [5,'Adequate energy but not consistently engaging.'],
+    [4,'Noticeably flat or monotone for long stretches.'],
+    [3,'Low energy and little use of intonation; hard to sustain interest.'],
+    [2,'Very little expression; almost monotone throughout.'],
+    [1,'No energy or intonation; completely flat.'],
+  ]},
+  { cls:'c3', title:'3. Non-Verbal Delivery (Body Language, Eye Contact, Gestures)', rows:[
+    [10,'Body language strongly supports the message; excellent posture, natural gestures, and confident eye contact.'],
+    [9,'Very good use of body language, with only minor stiffness or distraction.'],
+    [8,'Good posture and gestures; eye contact mostly consistent.'],
+    [7,'Acceptable delivery, though some gestures or eye contact seem forced or missing.'],
+    [6,'Limited non-verbal support; body language adds little impact.'],
+    [5,'Basic effort made, but gestures/eye contact are inconsistent.'],
+    [4,'Stiff or awkward body language; little eye contact.'],
+    [3,'Very minimal gestures and poor posture; little audience connection.'],
+    [2,'Distracting or inappropriate non-verbal delivery.'],
+    [1,'No effort; completely disengaged physically from the speech.'],
+  ]},
+  { cls:'c4', title:'4. Creative Content', rows:[
+    [10,'Exceptionally original, imaginative, and memorable content; clear personal voice.'],
+    [9,'Very creative with strong original ideas, though not fully polished.'],
+    [8,'Creative touches present; mostly fresh and engaging.'],
+    [7,'Some original ideas, but content feels partly predictable.'],
+    [6,'Limited creativity; ideas are somewhat standard but organized.'],
+    [5,'Adequate effort but mostly safe, predictable content.'],
+    [4,'Minimal creativity; ideas lack originality.'],
+    [3,'Very plain or repetitive; little evidence of creativity.'],
+    [2,'Hardly any creativity; speech feels copied or unoriginal.'],
+    [1,'No creative input at all; completely generic.'],
+  ]},
+];
+
+/* ---- API ---- */
+async function api(action, params={}){
+  const usp = new URLSearchParams({action, ...params});
+  const res = await fetch(API_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: usp.toString()
+  });
+  return res.json();
+}
+function toast(msg, isErr){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(isErr?' err':'');
+  setTimeout(()=>t.className='toast',2200);
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ---- judging rubric popup ---- */
+function openRubric(){
+  const cats=RUBRIC.map(c=>{
+    const rows=c.rows.map(r=>`<tr><td class="sc">${r[0]}</td><td>${esc(r[1])}</td></tr>`).join('');
+    return `<div class="rcat ${c.cls}">
+      <h4>${esc(c.title)}</h4>
+      <table class="rtable"><tbody>${rows}</tbody></table>
+    </div>`;
+  }).join('');
+  document.getElementById('modalHost').innerHTML=`
+    <div class="modal-bg" onclick="if(event.target===this)closeModal()">
+      <div class="modal rubric">
+        <div class="rubric-banner">
+          <h2>Speech Contest Judging Rubric · 1–10 Scale per Category</h2>
+          <button class="close-x" onclick="closeModal()">×</button>
+        </div>
+        <div class="guidelines">
+          <div class="g-item"><b>1. Tie-Breaking Rule</b> — Rankings are determined by average scores. In case of a tie, the Creative Content score is used as the first tie-breaker.</div>
+          <div class="g-item"><b>2. Score Distribution</b> — Most scores should reasonably fall in the 5–8 range. Reserve extremely high (10) or low (1) scores only for truly exceptional or very weak performances.</div>
+        </div>
+        <div class="rubric-cats">${cats}</div>
+      </div>
+    </div>`;
+}
+
+/* ---- login ---- */
+async function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  const errEl=document.getElementById('loginErr');
+  errEl.textContent='';
+  if(!u||!p){errEl.textContent='Enter your username and password.';return;}
+  if(API_URL.includes('PASTE_YOUR')){errEl.textContent='Setup needed: enter the API_URL first.';return;}
+  errEl.textContent='Checking…';
+  try{
+    const r=await api('login',{username:u,password:p});
+    if(!r.ok){errEl.textContent='Incorrect username or password.';return;}
+    state.user=r.username; state.role=r.role;
+    sessionStorage.setItem('sc_user',JSON.stringify({user:r.username,role:r.role}));
+    enterApp();
+  }catch(e){ errEl.textContent='Connection failed. Check the API_URL.'; }
+}
+function logout(){
+  sessionStorage.removeItem('sc_user');
+  state={user:null,role:null,students:[],scores:[],campusFilter:'ALL',sortKey:'total',sortDir:'desc',localScores:{},editing:null,draft:{}};
+  document.getElementById('appView').classList.add('hidden');
+  document.getElementById('loginView').classList.remove('hidden');
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+}
+
+async function enterApp(){
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('appView').classList.remove('hidden');
+  document.getElementById('whoLabel').textContent = state.user;
+  document.getElementById('roleBadge').textContent = state.role==='master' ? 'Master' : 'Judge';
+  // logout label localized to role
+  document.getElementById('logoutBtn').textContent = state.role==='master' ? '로그아웃' : 'Log Out';
+
+  await loadStudents();
+  if(state.role==='master'){
+    document.getElementById('resultsView').classList.remove('hidden');
+    loadResults();
+  }else{
+    await loadMyScores();
+    showList();
+  }
+}
+
+async function loadStudents(){
+  const r=await api('getStudents');
+  state.students = r.ok ? r.students : [];
+}
+async function loadMyScores(){
+  const r=await api('getScores',{judge:state.user});
+  state.localScores={};
+  if(r.ok){
+    r.scores.forEach(s=>{
+      state.localScores[s.studentNo]={clarity:s.clarity,energy:s.energy,nonverbal:s.nonverbal,creative:s.creative};
+    });
+  }
+}
+
+/* ================= JUDGE — LIST ================= */
+function showList(){
+  document.getElementById('judgeScoreView').classList.add('hidden');
+  document.getElementById('judgeListView').classList.remove('hidden');
+  renderRoster();
+}
+function setCampusFilter(c){
+  state.campusFilter=c;
+  document.querySelectorAll('#campusFilter .pill').forEach(p=>p.classList.toggle('active',p.dataset.c===c));
+  renderRoster();
+}
+function isDone(no){
+  const s=state.localScores[no];
+  return s && [s.clarity,s.energy,s.nonverbal,s.creative].every(v=>v!==''&&v!=null);
+}
+function studentAvg(no){
+  const s=state.localScores[no]||{};
+  const vals=CATS.map(c=>Number(s[c.key])).filter(v=>!isNaN(v)&&v>0);
+  if(vals.length<4) return null;
+  return (vals.reduce((a,b)=>a+b,0)/4);
+}
+
+function renderRoster(){
+  const q=(document.getElementById('searchBox').value||'').toLowerCase().trim();
+  const host=document.getElementById('roster');
+
+  if(!state.students.length){
+    host.innerHTML=`<div class="empty"><div class="ic">📭</div>No students yet.<br>The roster must be uploaded by the master.</div>`;
+    document.getElementById('progressLine').textContent='';
+    return;
+  }
+
+  // keep original list order (No), just filter
+  let items=state.students.filter(st=>{
+    if(state.campusFilter!=='ALL' && String(st.campus).trim()!==state.campusFilter) return false;
+    if(q && !String(st.nameEng).toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const doneCount=state.students.filter(st=>isDone(st.no)).length;
+  document.getElementById('progressLine').innerHTML=
+    `Scored <b>${doneCount}</b> of <b>${state.students.length}</b> students`;
+
+  if(!items.length){
+    host.innerHTML=`<div class="empty"><div class="ic">🔍</div>No students match your search.</div>`;
+    return;
+  }
+
+  host.innerHTML=items.map(st=>{
+    const done=isDone(st.no);
+    const avg=studentAvg(st.no);
+    const btn = done
+      ? `<button class="row-btn edit" onclick="openScore('${st.no}')">Edit Score</button>`
+      : `<button class="row-btn score" onclick="openScore('${st.no}')">Enter Score</button>`;
+    const status = done
+      ? `<span class="row-avg">Your avg <b>${avg.toFixed(2)}</b><span class="out">/10</span></span>`
+      : `<span class="status-chip todo">Not scored</span>`;
+    return `<div class="rrow ${done?'done':'todo'}">
+      <div class="idx">${esc(st.no)}</div>
+      <div class="info">
+        <div class="name-row">
+          <div class="rname">${esc(st.nameEng)}<span class="kor">${esc(st.nameKor)}</span></div>
+          <div class="tags">
+            <span class="tag cp">${campusLabel(st.campus)}</span>
+            <span class="tag lv">Level ${esc(st.level)}</span>
+            <span class="tag gr">Grade ${esc(st.grade)}</span>
+            <span class="tag tc">${esc(st.teacher)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="rstatus">${status}${btn}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ================= JUDGE — SCORE SCREEN ================= */
+function openScore(no){
+  const st=state.students.find(s=>String(s.no)===String(no));
+  if(!st) return;
+  state.editing=no;
+  const existing=state.localScores[no]||{};
+  state.draft={
+    clarity:existing.clarity??null, energy:existing.energy??null,
+    nonverbal:existing.nonverbal??null, creative:existing.creative??null
+  };
+  // header
+  document.getElementById('scoreStudentHeader').innerHTML=`
+    <h2>${esc(st.nameEng)}<span class="kor">${esc(st.nameKor)}</span></h2>
+    <div class="sh-tags">
+      <span class="tag cp">${campusLabel(st.campus)}</span>
+      <span class="tag lv">Level ${esc(st.level)}</span>
+      <span class="tag gr">Grade ${esc(st.grade)}</span>
+      <span class="tag tc">${esc(st.teacher)}</span>
+      <span class="tag no">No. ${esc(st.no)}</span>
+    </div>
+    <div class="sh-topic"><span class="lab">Speech Topic</span>${esc(st.topic)}</div>`;
+  renderCatCards();
+  updateFooterAvg();
+  document.getElementById('judgeListView').classList.add('hidden');
+  document.getElementById('judgeScoreView').classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+
+function renderCatCards(){
+  const host=document.getElementById('catCards');
+  host.innerHTML=CATS.map(c=>{
+    const val=state.draft[c.key];
+    const btns=[];
+    for(let n=1;n<=10;n++){
+      btns.push(`<button class="${val===n?'sel':''}" onclick="pickScore('${c.key}',${n})">${n}</button>`);
+    }
+    return `<div class="cat-card">
+      <div class="cat-top">
+        <span class="cat-name">${c.label}</span>
+        <span class="cat-val ${val==null?'empty':''}" id="catval-${c.key}">${val==null?'–':val}</span>
+      </div>
+      <div class="scale">${btns.join('')}</div>
+      <div class="scale-legend"><span>1 · Poor</span><span>Average</span><span>Good</span><span>10 · Excellent</span></div>
+    </div>`;
+  }).join('');
+}
+
+function pickScore(key,n){
+  state.draft[key]=n;
+  // update just this card's buttons + value
+  const cards=document.querySelectorAll('.cat-card');
+  const idx=CATS.findIndex(c=>c.key===key);
+  const card=cards[idx];
+  card.querySelectorAll('.scale button').forEach((b,i)=>b.classList.toggle('sel',i+1===n));
+  const v=card.querySelector('.cat-val'); v.textContent=n; v.classList.remove('empty');
+  updateFooterAvg();
+}
+
+function updateFooterAvg(){
+  const vals=CATS.map(c=>state.draft[c.key]).filter(v=>v!=null);
+  const el=document.getElementById('footerAvg');
+  el.textContent = vals.length<4 ? '—' : (vals.reduce((a,b)=>a+b,0)/4).toFixed(2);
+}
+
+function backToList(){
+  state.editing=null; state.draft={};
+  showList();
+}
+
+async function saveCurrentScore(){
+  const no=state.editing;
+  const d=state.draft;
+  const missing=CATS.some(c=>d[c.key]==null);
+  if(missing){toast('Please rate all four categories.',true);return;}
+  const btn=document.getElementById('saveBtn');
+  btn.textContent='Saving…'; btn.disabled=true;
+  try{
+    const r=await api('saveScore',{
+      judge:state.user, studentNo:no,
+      clarity:d.clarity, energy:d.energy, nonverbal:d.nonverbal, creative:d.creative
+    });
+    if(!r.ok) throw new Error();
+    state.localScores[no]={clarity:d.clarity,energy:d.energy,nonverbal:d.nonverbal,creative:d.creative};
+    toast('Score saved.');
+    btn.textContent='Save Score'; btn.disabled=false;
+    backToList();
+  }catch(e){ btn.textContent='Save Score'; btn.disabled=false; toast('Save failed. Please try again.',true); }
+}
+
+/* ================= MASTER: rankings & results ================= */
+async function loadResults(){
+  const rank=document.getElementById('rankTables');
+  rank.innerHTML=`<div class="loading">Loading…</div>`;
+  const r=await api('getScores');
+  state.scores = r.ok ? r.scores : [];
+  buildSummary(); renderRanks();
+}
+function buildSummary(){
+  const judges=[...new Set(state.scores.map(s=>s.judge))];
+  const scoredNos=new Set(state.scores.map(s=>s.studentNo));
+  document.getElementById('summaryCards').innerHTML=`
+    <div class="sumcard"><div class="n">${state.students.length}</div><div class="l">Total Students</div></div>
+    <div class="sumcard"><div class="n">${judges.length}</div><div class="l">Judges Scored</div></div>
+    <div class="sumcard"><div class="n">${scoredNos.size}</div><div class="l">Students Scored</div></div>
+    <div class="sumcard"><div class="n">${CAMPUSES.length}</div><div class="l">Campuses</div></div>`;
+}
+function setViewMode(m){
+  state.viewMode=m;
+  document.querySelectorAll('#viewModes .vmode').forEach(b=>b.classList.toggle('active',b.dataset.m===m));
+  renderRanks();
+}
+function setGradeFilter(g){
+  state.gradeFilter=g;
+  renderRanks();
+}
+/* extract grade number (1–4) from a grade value like "3", "G3", "Grade 3" */
+function gradeNum(g){
+  const m=String(g).match(/\d+/);
+  return m?parseInt(m[0],10):null;
+}
+/* does a student fall in the currently selected grade band? (campus view) */
+function passesGradeFilter(student){
+  if(state.gradeFilter==='ALL') return true;
+  const n=gradeNum(student.grade);
+  if(state.gradeFilter==='low') return n===1||n===2;
+  if(state.gradeFilter==='upper') return n===3||n===4;
+  return true;
+}
+function aggregate(){
+  const byStudent={};
+  const creativeByStudent={};
+  // treat a score field as valid only if it's a real number 1–10 (empty string / null / out-of-range are invalid)
+  const validScore=v=>{
+    if(v===''||v==null) return false;
+    const n=Number(v);
+    return Number.isFinite(n) && n>=1 && n<=10;
+  };
+  state.scores.forEach(s=>{
+    // all four categories must be valid for this judge's score to count
+    if(!validScore(s.clarity)||!validScore(s.energy)||!validScore(s.nonverbal)||!validScore(s.creative)) return;
+    const sum=Number(s.clarity)+Number(s.energy)+Number(s.nonverbal)+Number(s.creative);
+    (byStudent[s.studentNo]=byStudent[s.studentNo]||[]).push(sum);
+    (creativeByStudent[s.studentNo]=creativeByStudent[s.studentNo]||[]).push(Number(s.creative));
+  });
+  return state.students.map(st=>{
+    const totals=byStudent[st.no]||[];
+    const judgeCount=totals.length;
+    const avgTotal=judgeCount?totals.reduce((a,b)=>a+b,0)/judgeCount:null;
+    const creatives=creativeByStudent[st.no]||[];
+    const avgCreative=creatives.length?creatives.reduce((a,b)=>a+b,0)/creatives.length:null;
+    return {...st,judgeCount,avgTotal,avgCreative};
+  });
+}
+function setSort(key){
+  if(state.sortKey===key) state.sortDir=state.sortDir==='desc'?'asc':'desc';
+  else{state.sortKey=key;state.sortDir='desc';}
+  renderRanks();
+}
+function sortArrow(key){
+  if(state.sortKey!==key) return '';
+  return `<span class="arrow">${state.sortDir==='desc'?'▼':'▲'}</span>`;
+}
+/* sort a list of aggregated students by current sort key */
+function sortRows(rows){
+  const sorted=[...rows].sort((a,b)=>{
+    if(state.sortKey==='name'){
+      const av=a.nameEng||'', bv=b.nameEng||'';
+      return state.sortDir==='asc'?av.localeCompare(bv):bv.localeCompare(av);
+    }
+    if(state.sortKey==='judges'){
+      const av=a.judgeCount, bv=b.judgeCount;
+      if(av!==bv) return state.sortDir==='asc'?av-bv:bv-av;
+      // fall through to total, then creative
+    }
+    // primary: average total
+    const at=a.avgTotal??-1, bt=b.avgTotal??-1;
+    if(at!==bt) return state.sortDir==='asc'?at-bt:bt-at;
+    // tie-breaker 1: Creative Content average (higher ranks first, regardless of sort dir)
+    const ac=a.avgCreative??-1, bc=b.avgCreative??-1;
+    if(ac!==bc) return bc-ac;
+    return 0;
+  });
+  const scored=sorted.filter(r=>r.avgTotal!=null);
+  const unscored=sorted.filter(r=>r.avgTotal==null);
+  return {ordered:[...scored,...unscored],scoredCount:scored.length};
+}
+
+/* render one ranking table for a given group */
+function renderRankGroup(icon, titleHtml, rows, emptyMsg){
+  const {ordered,scoredCount}=sortRows(rows);
+  const medals={1:'🥇',2:'🥈',3:'🥉'};
+  // assign ranks with ties: same total AND same creative → shared rank
+  const ranks=[];
+  let prevKey=null, prevRank=0;
+  ordered.forEach((r,i)=>{
+    if(r.avgTotal==null){ ranks.push(null); return; }
+    const key=`${r.avgTotal}|${r.avgCreative}`;
+    if(key===prevKey){ ranks.push(prevRank); }       // exact tie → same rank
+    else { prevRank=i+1; prevKey=key; ranks.push(prevRank); }
+  });
+  const body=ordered.length?ordered.map((r,i)=>{
+    const rank=ranks[i];
+    const rankClass=rank?`rk${rank}`:'';
+    const badge = rank==null
+      ? `<span class="rank-badge">–</span>`
+      : (medals[rank]
+          ? `<span class="rank-badge medal">${medals[rank]}</span>`
+          : `<span class="rank-badge">${rank}</span>`);
+    const pct=r.avgTotal!=null?Math.max(4,(r.avgTotal/40*100)):0;
+    const jc=r.judgeCount;
+    const jClass = jc===0?'none':(jc>=5?'':'partial');
+    return `<tr class="${rankClass}">
+      <td class="rank">${badge}</td>
+      <td class="name-cell">
+        <span class="en">${esc(r.nameEng)}</span><span class="ko">${esc(r.nameKor)}</span>
+        <div class="tags">
+          <span class="tag cp">${campusLabel(r.campus)}</span>
+          <span class="tag lv">Level ${esc(r.level)}</span>
+          <span class="tag gr">Grade ${esc(r.grade)}</span>
+          <span class="tag tc">${esc(r.teacher)}</span>
+        </div>
+      </td>
+      <td class="total">
+        ${r.avgTotal!=null
+          ? `<span class="total-val">${r.avgTotal.toFixed(2)}</span> <span class="total-out">/ 40</span>
+             <div class="total-bar"><i style="width:${pct}%"></i></div>`
+          : `<span class="total-out">—</span>`}
+      </td>
+      <td class="judges-cell">
+        <span class="judges-pill ${jClass}"><span class="dot"></span>${jc} / 5</span>
+      </td>
+      <td class="action-cell">
+        ${r.avgTotal!=null
+          ? `<button class="detail-btn" onclick="showDetail('${r.no}')">Details</button>`
+          : `<span class="notscored-tag">Not scored</span>`}
+      </td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="5" style="text-align:center;color:#999;padding:34px">${emptyMsg}</td></tr>`;
+  return `<div class="rank-table-wrap">
+    <div class="rank-title">${icon} ${titleHtml} <span class="cnt">${scoredCount} scored · ${rows.length} total</span></div>
+    <table>
+      <thead><tr>
+        <th onclick="setSort('total')">Rank${sortArrow('total')}</th>
+        <th onclick="setSort('name')">Student${sortArrow('name')}</th>
+        <th onclick="setSort('total')">Average Score${sortArrow('total')}</th>
+        <th onclick="setSort('judges')">Judges${sortArrow('judges')}</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table>
+  </div>`;
+}
+
+function renderRanks(){
+  const host=document.getElementById('rankTables');
+  const data=aggregate();
+  let html='';
+
+  if(state.viewMode==='overall'){
+    html=renderRankGroup('🏆','<span class="campus-name">Overall</span> Rankings <span style="font-weight:500;color:#aeb4c4;font-size:13px">(all campuses)</span>',
+      data,'No students yet.');
+  }
+  else if(state.viewMode==='campus'){
+    const gf=state.gradeFilter;
+    const filterBar=`<div class="grade-filter">
+      <span class="grade-filter-label">Grade</span>
+      <div class="gf-pills">
+        <button class="gf-pill ${gf==='ALL'?'active':''}" onclick="setGradeFilter('ALL')">All Grades</button>
+        <button class="gf-pill ${gf==='low'?'active':''}" onclick="setGradeFilter('low')">Low Grade · 1–2</button>
+        <button class="gf-pill ${gf==='upper'?'active':''}" onclick="setGradeFilter('upper')">Upper Grade · 3–4</button>
+      </div>
+    </div>`;
+    const bandNote = gf==='low' ? ' <span style="font-weight:500;color:#aeb4c4;font-size:13px">(Grades 1–2)</span>'
+                   : gf==='upper' ? ' <span style="font-weight:500;color:#aeb4c4;font-size:13px">(Grades 3–4)</span>'
+                   : '';
+    const emptyMsg = gf==='ALL' ? 'No students in this campus.'
+                   : `No ${gf==='low'?'Grade 1–2':'Grade 3–4'} students in this campus.`;
+    const tables=CAMPUSES.map(campus=>{
+      const rows=data.filter(d=>String(d.campus).trim()===campus && passesGradeFilter(d));
+      return renderRankGroup(campusEmoji(campus),`<span class="campus-name">${campus}</span> Rankings${bandNote}`,rows,emptyMsg);
+    }).join('<div class="group-gap"></div>');
+    html=filterBar+tables;
+  }
+  else if(state.viewMode==='grade'){
+    const groups=[
+      {label:'Low Grade',sub:'Grades 1–2',nums:[1,2]},
+      {label:'Upper Grade',sub:'Grades 3–4',nums:[3,4]},
+    ];
+    html=groups.map(g=>{
+      const rows=data.filter(d=>g.nums.includes(gradeNum(d.grade)));
+      return renderRankGroup('🎓',`<span class="campus-name">${g.label}</span> Rankings <span style="font-weight:500;color:#aeb4c4;font-size:13px">(${g.sub})</span>`,rows,`No students in ${g.sub}.`);
+    }).join('<div class="group-gap"></div>');
+  }
+
+  host.innerHTML=html;
+}
+function showDetail(no){
+  const st=state.students.find(s=>String(s.no)===String(no));
+  const rows=state.scores.filter(s=>String(s.studentNo)===String(no));
+  const catHead=CATS.map(c=>`<th>${c.label.split(' ')[0]}</th>`).join('');
+  const body=rows.map(r=>{
+    const sum=Number(r.clarity)+Number(r.energy)+Number(r.nonverbal)+Number(r.creative);
+    return `<tr><td><b>${esc(r.judge)}</b></td><td>${r.clarity}</td><td>${r.energy}</td><td>${r.nonverbal}</td><td>${r.creative}</td><td class="total"><span class="total-val" style="font-size:16px">${sum}</span></td><td class="total"><b>${(sum/4).toFixed(2)}</b></td></tr>`;
+  }).join('');
+  const avgTotal=rows.length?(rows.reduce((a,r)=>a+Number(r.clarity)+Number(r.energy)+Number(r.nonverbal)+Number(r.creative),0)/rows.length).toFixed(2):'—';
+  document.getElementById('modalHost').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>${esc(st.nameEng)} <span style="color:#6b7080;font-weight:500;font-size:16px">${esc(st.nameKor)}</span></h3>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-tags">
+          <span class="tag" style="background:#e2f4f6;color:#2f8b95">${campusLabel(st.campus)}</span>
+          <span class="tag lv">Level ${esc(st.level)}</span>
+          <span class="tag gr">Grade ${esc(st.grade)}</span>
+          <span class="tag tc">${esc(st.teacher)}</span>
+        </div>
+        <div class="detail-topic"><span class="lab">Topic</span>${esc(st.topic)}</div>
+        <table class="detail-table"><thead><tr><th>Judge</th>${catHead}<th>Total</th><th>Avg</th></tr></thead>
+        <tbody>${body||'<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">No scores recorded.</td></tr>'}</tbody>
+        <tfoot><tr><td colspan="5"><b>Average Total</b></td><td class="total"><span class="total-val" style="font-size:17px;color:var(--gold)">${avgTotal}</span></td><td></td></tr></tfoot></table>
+      </div>
+    </div></div>`;
+}
+function closeModal(){document.getElementById('modalHost').innerHTML='';}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const saved=sessionStorage.getItem('sc_user');
+  if(saved){const {user,role}=JSON.parse(saved);state.user=user;state.role=role;enterApp();}
+  document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  // clear any browser-autofilled values so the fields don't look pre-filled
+  setTimeout(()=>{
+    if(!sessionStorage.getItem('sc_user')){
+      document.getElementById('loginUser').value='';
+      document.getElementById('loginPass').value='';
+    }
+  }, 150);
+});
+</script>
+</body>
+</html>
