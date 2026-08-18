@@ -1112,7 +1112,6 @@ function showDetail(no){
         <table class="detail-table"><thead><tr><th>Judge</th>${catHead}<th>Total</th><th>Avg</th></tr></thead>
         <tbody>${body||'<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">No scores recorded.</td></tr>'}</tbody>
         <tfoot><tr><td colspan="5"><b>Average Total</b></td><td class="total"><span class="total-val" style="font-size:17px;color:var(--gold)">${avgTotal}</span></td><td></td></tr></tfoot></table>
-        ${rows.length>1?`<div class="detail-legend"><span class="lg-high">■</span> Highest &nbsp; <span class="lg-low">■</span> Lowest &nbsp;<span style="color:#a8aec0">· per category</span></div>`:''}
       </div>
     </div></div>`;
 }
