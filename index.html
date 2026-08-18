@@ -319,6 +319,11 @@ td.action-cell{width:96px;text-align:right;padding-right:22px}
 .detail-table tbody tr:hover{background:#f7f9fe}
 .detail-table tfoot td{background:#f4f7fd;border-top:2px solid var(--line);border-bottom:none;padding:13px 12px;text-align:center}
 .detail-table tfoot td:first-child{text-align:right}
+/* highest / lowest score emphasis within a category (or total) */
+.detail-table td.cell-high{color:var(--ok);font-weight:800;background:rgba(63,179,191,.08)}
+.detail-table td.cell-low{color:var(--red);font-weight:800;background:rgba(229,96,106,.07)}
+.detail-table .total-val.cell-high{color:var(--ok)}
+.detail-table .total-val.cell-low{color:var(--red)}
 
 /* ---- rubric modal ---- */
 .modal.rubric{max-width:820px}
@@ -640,7 +645,7 @@ async function enterApp(){
     if(state._preloadScores!=null){
       // data already came from bootstrap — no extra round-trips
       state.scores=state._preloadScores; state._preloadScores=undefined;
-      buildSummary(); renderRanks();
+      buildSummary(); setViewMode('overall');
     }else{
       await loadStudents();
       loadResults();
@@ -854,7 +859,7 @@ async function loadResults(){
   rank.innerHTML=`<div class="loading">Loading…</div>`;
   const r=await api('getScores');
   state.scores = r.ok ? r.scores : [];
-  buildSummary(); renderRanks();
+  buildSummary(); setViewMode('overall');
 }
 function buildSummary(){
   const judges=[...new Set(state.scores.map(s=>s.judge))];
@@ -1071,10 +1076,33 @@ function showDetail(no){
   const st=state.students.find(s=>String(s.no)===String(no));
   const rows=state.scores.filter(s=>String(s.studentNo)===String(no));
   const catHead=CATS.map(c=>`<th>${c.short||c.label.split(' ')[0]}</th>`).join('');
+  // per-category min/max across judges (only meaningful with 2+ judges and a spread)
+  const catRange={};
+  CATS.forEach(c=>{
+    const vals=rows.map(r=>Number(r[c.key])).filter(v=>!isNaN(v));
+    catRange[c.key]= vals.length>1 ? {min:Math.min(...vals),max:Math.max(...vals)} : null;
+  });
+  // total (sum of 4) min/max across judges
+  const sums=rows.map(r=>CATS.reduce((acc,c)=>acc+Number(r[c.key]),0));
+  const totalRange = sums.length>1 ? {min:Math.min(...sums),max:Math.max(...sums)} : null;
   const body=rows.map(r=>{
     const sum=CATS.reduce((acc,c)=>acc+Number(r[c.key]),0);
-    const cells=CATS.map(c=>`<td>${r[c.key]}</td>`).join('');
-    return `<tr><td><b>${esc(r.judge)}</b></td>${cells}<td class="total"><span class="total-val" style="font-size:16px">${sum}</span></td><td class="total"><b>${(sum/4).toFixed(2)}</b></td></tr>`;
+    const cells=CATS.map(c=>{
+      const v=Number(r[c.key]);
+      const rng=catRange[c.key];
+      let cls='';
+      if(rng && rng.max!==rng.min){
+        if(v===rng.max) cls=' class="cell-high"';
+        else if(v===rng.min) cls=' class="cell-low"';
+      }
+      return `<td${cls}>${r[c.key]}</td>`;
+    }).join('');
+    let totalCls='total-val';
+    if(totalRange && totalRange.max!==totalRange.min){
+      if(sum===totalRange.max) totalCls+=' cell-high';
+      else if(sum===totalRange.min) totalCls+=' cell-low';
+    }
+    return `<tr><td><b>${esc(r.judge)}</b></td>${cells}<td class="total"><span class="${totalCls}" style="font-size:16px">${sum}</span></td><td class="total"><b>${(sum/4).toFixed(2)}</b></td></tr>`;
   }).join('');
   const avgTotal=rows.length?(rows.reduce((a,r)=>a+CATS.reduce((acc,c)=>acc+Number(r[c.key]),0),0)/rows.length).toFixed(2):'—';
   document.getElementById('modalHost').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()">
@@ -1094,6 +1122,7 @@ function showDetail(no){
         <table class="detail-table"><thead><tr><th>Judge</th>${catHead}<th>Total</th><th>Avg</th></tr></thead>
         <tbody>${body||'<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">No scores recorded.</td></tr>'}</tbody>
         <tfoot><tr><td colspan="5"><b>Average Total</b></td><td class="total"><span class="total-val" style="font-size:17px;color:var(--gold)">${avgTotal}</span></td><td></td></tr></tfoot></table>
+        ${rows.length>1?`<div class="detail-legend"><span class="lg-high">■</span> Highest &nbsp; <span class="lg-low">■</span> Lowest &nbsp;<span style="color:#a8aec0">· per category</span></div>`:''}
       </div>
     </div></div>`;
 }
