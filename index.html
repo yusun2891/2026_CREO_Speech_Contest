@@ -257,6 +257,8 @@ tr.rk1{background:linear-gradient(90deg,rgba(92,196,207,.10),transparent 60%)}
 .name-cell .en{font-weight:700;font-size:15.5px;color:var(--navy);letter-spacing:-.01em}
 .name-cell .ko{color:var(--muted);font-weight:500;font-size:13px;margin-left:7px}
 .name-cell .tags{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.cat-avgs{display:flex;gap:6px;margin-top:9px;flex-wrap:nowrap}
+.cat-avgs .ca{display:inline-flex;align-items:center;justify-content:center;min-width:30px;background:#eef1f8;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:600;color:#5b5f6e;cursor:default}
 .tag{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;background:#eef1f8;color:#5b5f6e;white-space:nowrap}
 .tag.lv{background:#e4ecfb;color:#4257a8}
 .tag.gr{background:#e2f4f6;color:#2f8b95}
@@ -264,10 +266,10 @@ tr.rk1{background:linear-gradient(90deg,rgba(92,196,207,.10),transparent 60%)}
 .tag.cp{background:#e2f4f6;color:#2f8b95}
 
 /* score cell */
-td.total{width:150px}
+td.total{width:200px}
 .total-val{font-weight:800;font-size:20px;color:var(--navy);line-height:1}
 .total-out{font-size:12px;color:var(--muted);font-weight:500}
-.total-bar{height:6px;border-radius:3px;background:#eef1f8;margin-top:7px;overflow:hidden;max-width:130px}
+.total-bar{height:6px;border-radius:3px;background:#eef1f8;margin-top:7px;overflow:hidden;max-width:150px}
 .total-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--teal),var(--gold-soft))}
 
 .judges-cell{width:96px}
@@ -303,8 +305,9 @@ td.action-cell{width:96px;text-align:right;padding-right:22px}
 
 /* ---- detail modal ---- */
 .detail-tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
-.detail-topic{background:#f4f7fd;border:1px solid var(--line);border-radius:14px;padding:14px 18px;font-size:14px;color:#4a4f66;margin-bottom:18px}
-.detail-topic .lab{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-bottom:3px}
+.detail-topic{margin-bottom:18px;background:linear-gradient(180deg,#eef3fd,#e7effc);border:1px solid #dce6fa;border-radius:16px;padding:14px 18px;display:flex;align-items:flex-start;gap:12px}
+.detail-topic .lab{flex:none;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#fff;font-weight:800;background:var(--navy);padding:5px 11px;border-radius:999px;margin-top:1px}
+.detail-topic .topic-text{font-size:16px;font-weight:700;color:var(--navy);line-height:1.4}
 .detail-table{font-size:13.5px}
 .detail-table th{padding:10px 12px;text-align:center;cursor:default;border-bottom:2px solid var(--line)}
 .detail-table th:first-child{text-align:left}
@@ -459,7 +462,7 @@ td.action-cell{width:96px;text-align:right;padding-right:22px}
 /* ==========================================================
    CONFIG — paste your Apps Script Web App URL here
    ========================================================== */
-const API_URL = "https://script.google.com/macros/s/AKfycbwvhsILK9sx3_aK4NGBwsieQWSWPw98NJbe8bRhfmwOZ2EmFV-vCEVJJ-ngt-gsy2l6/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbww-zGGnNt1kbcKUCZNTUpR3ORBO2uNwkMZ9_sTwcaRdYetMgHhb1bTRQvZ6daLakrsxw/exec";
 
 let state = {
   user:null, role:null,
@@ -468,15 +471,15 @@ let state = {
   viewMode:'overall',   // 'overall' | 'campus' | 'grade'
   gradeFilter:'ALL',    // 'ALL' | 'low' | 'upper' — used in campus view
   sortKey:'total', sortDir:'desc',
-  localScores:{},      // { studentNo: {clarity,energy,nonverbal,creative} }
+  localScores:{},      // { studentNo: {presence,clarity,energy,creative} }
   editing:null,        // studentNo currently on the score screen
   draft:{},            // scores being edited on the score screen
 };
 const CATS = [
-  {key:'clarity',   label:'Clarity & Pace'},
-  {key:'energy',    label:'Energy & Intonation'},
-  {key:'nonverbal', label:'Non-Verbal Delivery'},
-  {key:'creative',  label:'Creative Content'},
+  {key:'presence', label:'Stage Presence & Naturalness', short:'Stage'},
+  {key:'clarity',  label:'Clarity, Pace & Flow', short:'Clarity'},
+  {key:'energy',   label:'Energy & Vocal Expression', short:'Energy'},
+  {key:'creative', label:'Creative Content', short:'Creative'},
 ];
 const CAMPUSES = ['Songpa','Hanam','Daechi'];
 const CAMPUS_EMOJI = {Songpa:'🔵', Hanam:'🟢', Daechi:'🟠'};
@@ -485,41 +488,41 @@ function campusLabel(c){ return `${campusEmoji(c)} ${esc(c)}`; }
 
 /* ---- Judging rubric (1–10 descriptors per category) ---- */
 const RUBRIC = [
-  { cls:'c1', title:'1. Clarity & Pace', rows:[
-    [10,'Speech is crystal clear, well-articulated, and paced naturally throughout.'],
-    [9,'Mostly clear with only rare slips in pronunciation or pacing.'],
-    [8,'Clear overall but with a few minor moments of unclear words or uneven speed.'],
-    [7,'Understandable, though occasional unclear words or noticeable pacing issues occur.'],
-    [6,'Speech is somewhat clear, but several words/phrases are hard to catch.'],
-    [5,'Meaning is generally understandable but clarity/pacing distracts at times.'],
-    [4,'Frequent clarity or pacing issues make the speech difficult to follow.'],
-    [3,'Very unclear or rushed/slow pace in large sections.'],
-    [2,'Largely incomprehensible or extremely uneven pacing.'],
-    [1,'Nearly impossible to understand due to clarity and pace.'],
-  ]},
-  { cls:'c2', title:'2. Energy & Intonation', rows:[
-    [10,'Excellent energy, expressive tone, and varied intonation keep the audience fully engaged.'],
-    [9,'Very strong energy with occasional minor flat spots.'],
-    [8,'Clear effort to use expression and tone; mostly engaging.'],
-    [7,'Some variety in intonation, though energy drops at times.'],
-    [6,'Limited variation; delivery feels a bit flat but still shows effort.'],
-    [5,'Adequate energy but not consistently engaging.'],
-    [4,'Noticeably flat or monotone for long stretches.'],
-    [3,'Low energy and little use of intonation; hard to sustain interest.'],
-    [2,'Very little expression; almost monotone throughout.'],
-    [1,'No energy or intonation; completely flat.'],
-  ]},
-  { cls:'c3', title:'3. Non-Verbal Delivery (Body Language, Eye Contact, Gestures)', rows:[
-    [10,'Body language strongly supports the message; excellent posture, natural gestures, and confident eye contact.'],
-    [9,'Very good use of body language, with only minor stiffness or distraction.'],
-    [8,'Good posture and gestures; eye contact mostly consistent.'],
+  { cls:'c1', title:'1. Stage Presence & Naturalness', rows:[
+    [10,'Charismatic, entirely comfortable, and natural; excellent posture, dynamic gestures, and magnetic connection.'],
+    [9,'Highly engaging and at ease, with only minor stiffness or slight distraction.'],
+    [8,'Good presence and gestures; appears mostly comfortable with steady connection.'],
     [7,'Acceptable delivery, though some gestures or eye contact seem forced or missing.'],
-    [6,'Limited non-verbal support; body language adds little impact.'],
-    [5,'Basic effort made, but gestures/eye contact are inconsistent.'],
-    [4,'Stiff or awkward body language; little eye contact.'],
-    [3,'Very minimal gestures and poor posture; little audience connection.'],
-    [2,'Distracting or inappropriate non-verbal delivery.'],
-    [1,'No effort; completely disengaged physically from the speech.'],
+    [6,'Limited natural charisma; delivery feels a bit mechanical with little physical impact.'],
+    [5,'Basic effort made to entertain, but comfort fluctuates; gestures are inconsistent.'],
+    [4,'Stiff, awkward, or unengaging stage presence with little audience contact.'],
+    [3,'Very minimal presence and flat delivery; looks nervous with weak connection.'],
+    [2,'Distracting, boring, or highly uncomfortable delivery that takes away from the speech.'],
+    [1,'No effort; unengaging physically with no stage comfort, charisma, or presence.'],
+  ]},
+  { cls:'c2', title:'2. Clarity, Pace & Flow', rows:[
+    [10,'Crystal clear, well-articulated, and flows with an effortless, natural pace throughout.'],
+    [9,'Mostly clear and smooth with only rare slips in pronunciation or pacing.'],
+    [8,'Clear overall but with a few minor moments of uneven speed or robotic flow.'],
+    [7,'Understandable, though occasional unclear words or noticeable pacing issues occur.'],
+    [6,'Speech is somewhat clear, but several phrases lack a smooth, natural flow.'],
+    [5,'Meaning is generally understandable but clarity/pacing distracts from the flow at times.'],
+    [4,'Frequent clarity or rigid pacing issues make the speech difficult to follow.'],
+    [3,'Very unclear, rushed, or choppy flow throughout large sections of the speech.'],
+    [2,'Largely incomprehensible with extremely uneven, unnatural, or robotic pacing.'],
+    [1,'Nearly impossible to understand or follow due to a complete lack of clarity and flow.'],
+  ]},
+  { cls:'c3', title:'3. Energy & Vocal Expression', rows:[
+    [10,'Energetic, highly expressive tone, and dynamic intonation keep the audience captivated.'],
+    [9,'Very strong vocal variety and expressive engagement with occasional minor flat spots.'],
+    [8,'Clear effort to use lively expression and tone; mostly entertaining and engaging.'],
+    [7,'Some variety in intonation, though energy and audience engagement drop at times.'],
+    [6,'Limited variation; delivery feels a bit flat, over-rehearsed, or robotic.'],
+    [5,'Adequate vocal energy but struggles to maintain an entertaining, expressive tone.'],
+    [4,'Noticeably flat, monotone, or over-memorized for long stretches of the speech.'],
+    [3,'Low energy and little expressive variation; hard to sustain audience interest.'],
+    [2,'Very little vocal expression; mostly monotone, boring, or unengaging throughout.'],
+    [1,'No energy or natural intonation; completely flat and unentertaining performance.'],
   ]},
   { cls:'c4', title:'4. Creative Content', rows:[
     [10,'Exceptionally original, imaginative, and memorable content; clear personal voice.'],
@@ -630,7 +633,7 @@ async function loadMyScores(){
   state.localScores={};
   if(r.ok){
     r.scores.forEach(s=>{
-      state.localScores[s.studentNo]={clarity:s.clarity,energy:s.energy,nonverbal:s.nonverbal,creative:s.creative};
+      state.localScores[s.studentNo]={presence:s.presence,clarity:s.clarity,energy:s.energy,creative:s.creative};
     });
   }
 }
@@ -648,7 +651,7 @@ function setCampusFilter(c){
 }
 function isDone(no){
   const s=state.localScores[no];
-  return s && [s.clarity,s.energy,s.nonverbal,s.creative].every(v=>v!==''&&v!=null);
+  return s && [s.presence,s.clarity,s.energy,s.creative].every(v=>v!==''&&v!=null);
 }
 function studentAvg(no){
   const s=state.localScores[no]||{};
@@ -723,8 +726,8 @@ function openScore(no){
   state.editing=no;
   const existing=state.localScores[no]||{};
   state.draft={
-    clarity:existing.clarity??null, energy:existing.energy??null,
-    nonverbal:existing.nonverbal??null, creative:existing.creative??null
+    presence:existing.presence??null, clarity:existing.clarity??null,
+    energy:existing.energy??null, creative:existing.creative??null
   };
   // header
   document.getElementById('scoreStudentHeader').innerHTML=`
@@ -795,10 +798,10 @@ async function saveCurrentScore(){
   try{
     const r=await api('saveScore',{
       judge:state.user, studentNo:no,
-      clarity:d.clarity, energy:d.energy, nonverbal:d.nonverbal, creative:d.creative
+      presence:d.presence, clarity:d.clarity, energy:d.energy, creative:d.creative
     });
     if(!r.ok) throw new Error();
-    state.localScores[no]={clarity:d.clarity,energy:d.energy,nonverbal:d.nonverbal,creative:d.creative};
+    state.localScores[no]={presence:d.presence,clarity:d.clarity,energy:d.energy,creative:d.creative};
     toast('Score saved.');
     btn.textContent='Save Score'; btn.disabled=false;
     backToList();
@@ -846,7 +849,7 @@ function passesGradeFilter(student){
 }
 function aggregate(){
   const byStudent={};
-  const creativeByStudent={};
+  const perCat={};  // { studentNo: { key: [values] } }
   // treat a score field as valid only if it's a real number 1–10 (empty string / null / out-of-range are invalid)
   const validScore=v=>{
     if(v===''||v==null) return false;
@@ -855,18 +858,23 @@ function aggregate(){
   };
   state.scores.forEach(s=>{
     // all four categories must be valid for this judge's score to count
-    if(!validScore(s.clarity)||!validScore(s.energy)||!validScore(s.nonverbal)||!validScore(s.creative)) return;
-    const sum=Number(s.clarity)+Number(s.energy)+Number(s.nonverbal)+Number(s.creative);
+    if(CATS.some(c=>!validScore(s[c.key]))) return;
+    const sum=CATS.reduce((acc,c)=>acc+Number(s[c.key]),0);
     (byStudent[s.studentNo]=byStudent[s.studentNo]||[]).push(sum);
-    (creativeByStudent[s.studentNo]=creativeByStudent[s.studentNo]||[]).push(Number(s.creative));
+    perCat[s.studentNo]=perCat[s.studentNo]||{};
+    CATS.forEach(c=>{
+      (perCat[s.studentNo][c.key]=perCat[s.studentNo][c.key]||[]).push(Number(s[c.key]));
+    });
   });
+  const avgOf=arr=>arr&&arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:null;
   return state.students.map(st=>{
     const totals=byStudent[st.no]||[];
     const judgeCount=totals.length;
     const avgTotal=judgeCount?totals.reduce((a,b)=>a+b,0)/judgeCount:null;
-    const creatives=creativeByStudent[st.no]||[];
-    const avgCreative=creatives.length?creatives.reduce((a,b)=>a+b,0)/creatives.length:null;
-    return {...st,judgeCount,avgTotal,avgCreative};
+    const cats={};
+    CATS.forEach(c=>{ cats[c.key]=avgOf(perCat[st.no]&&perCat[st.no][c.key]); });
+    const avgCreative=cats.creative;  // used for tie-breaking
+    return {...st,judgeCount,avgTotal,avgCreative,catAvgs:cats};
   });
 }
 function setSort(key){
@@ -927,6 +935,12 @@ function renderRankGroup(icon, titleHtml, rows, emptyMsg){
     const pct=r.avgTotal!=null?Math.max(4,(r.avgTotal/40*100)):0;
     const jc=r.judgeCount;
     const jClass = jc===0?'none':(jc>=5?'':'partial');
+    const catLine = r.avgTotal!=null
+      ? `<div class="cat-avgs">${CATS.map(c=>{
+          const v=r.catAvgs[c.key];
+          return `<span class="ca" title="${c.label}">${v!=null?v.toFixed(1):'–'}</span>`;
+        }).join('')}</div>`
+      : '';
     return `<tr class="${rankClass}">
       <td class="rank">${badge}</td>
       <td class="name-cell">
@@ -941,7 +955,8 @@ function renderRankGroup(icon, titleHtml, rows, emptyMsg){
       <td class="total">
         ${r.avgTotal!=null
           ? `<span class="total-val">${r.avgTotal.toFixed(2)}</span> <span class="total-out">/ 40</span>
-             <div class="total-bar"><i style="width:${pct}%"></i></div>`
+             <div class="total-bar"><i style="width:${pct}%"></i></div>
+             ${catLine}`
           : `<span class="total-out">—</span>`}
       </td>
       <td class="judges-cell">
@@ -1015,12 +1030,13 @@ function renderRanks(){
 function showDetail(no){
   const st=state.students.find(s=>String(s.no)===String(no));
   const rows=state.scores.filter(s=>String(s.studentNo)===String(no));
-  const catHead=CATS.map(c=>`<th>${c.label.split(' ')[0]}</th>`).join('');
+  const catHead=CATS.map(c=>`<th>${c.short||c.label.split(' ')[0]}</th>`).join('');
   const body=rows.map(r=>{
-    const sum=Number(r.clarity)+Number(r.energy)+Number(r.nonverbal)+Number(r.creative);
-    return `<tr><td><b>${esc(r.judge)}</b></td><td>${r.clarity}</td><td>${r.energy}</td><td>${r.nonverbal}</td><td>${r.creative}</td><td class="total"><span class="total-val" style="font-size:16px">${sum}</span></td><td class="total"><b>${(sum/4).toFixed(2)}</b></td></tr>`;
+    const sum=CATS.reduce((acc,c)=>acc+Number(r[c.key]),0);
+    const cells=CATS.map(c=>`<td>${r[c.key]}</td>`).join('');
+    return `<tr><td><b>${esc(r.judge)}</b></td>${cells}<td class="total"><span class="total-val" style="font-size:16px">${sum}</span></td><td class="total"><b>${(sum/4).toFixed(2)}</b></td></tr>`;
   }).join('');
-  const avgTotal=rows.length?(rows.reduce((a,r)=>a+Number(r.clarity)+Number(r.energy)+Number(r.nonverbal)+Number(r.creative),0)/rows.length).toFixed(2):'—';
+  const avgTotal=rows.length?(rows.reduce((a,r)=>a+CATS.reduce((acc,c)=>acc+Number(r[c.key]),0),0)/rows.length).toFixed(2):'—';
   document.getElementById('modalHost').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()">
     <div class="modal">
       <div class="modal-head">
@@ -1034,7 +1050,7 @@ function showDetail(no){
           <span class="tag gr">Grade ${esc(st.grade)}</span>
           <span class="tag tc">${esc(st.teacher)}</span>
         </div>
-        <div class="detail-topic"><span class="lab">Topic</span>${esc(st.topic)}</div>
+        <div class="detail-topic"><span class="lab">Topic</span><span class="topic-text">${esc(st.topic)}</span></div>
         <table class="detail-table"><thead><tr><th>Judge</th>${catHead}<th>Total</th><th>Avg</th></tr></thead>
         <tbody>${body||'<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">No scores recorded.</td></tr>'}</tbody>
         <tfoot><tr><td colspan="5"><b>Average Total</b></td><td class="total"><span class="total-val" style="font-size:17px;color:var(--gold)">${avgTotal}</span></td><td></td></tr></tfoot></table>
