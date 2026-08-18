@@ -320,10 +320,8 @@ td.action-cell{width:96px;text-align:right;padding-right:22px}
 .detail-table tfoot td{background:#f4f7fd;border-top:2px solid var(--line);border-bottom:none;padding:13px 12px;text-align:center}
 .detail-table tfoot td:first-child{text-align:right}
 /* highest / lowest score emphasis within a category (or total) */
-.detail-table td.cell-high{color:var(--ok);font-weight:800;background:rgba(63,179,191,.08)}
-.detail-table td.cell-low{color:var(--red);font-weight:800;background:rgba(229,96,106,.07)}
-.detail-table .total-val.cell-high{color:var(--ok)}
-.detail-table .total-val.cell-low{color:var(--red)}
+.detail-table td.cell-high{color:#2e9e6b;font-weight:800}
+.detail-table td.cell-low{color:var(--red);font-weight:800}
 
 /* ---- rubric modal ---- */
 .modal.rubric{max-width:820px}
@@ -1082,9 +1080,6 @@ function showDetail(no){
     const vals=rows.map(r=>Number(r[c.key])).filter(v=>!isNaN(v));
     catRange[c.key]= vals.length>1 ? {min:Math.min(...vals),max:Math.max(...vals)} : null;
   });
-  // total (sum of 4) min/max across judges
-  const sums=rows.map(r=>CATS.reduce((acc,c)=>acc+Number(r[c.key]),0));
-  const totalRange = sums.length>1 ? {min:Math.min(...sums),max:Math.max(...sums)} : null;
   const body=rows.map(r=>{
     const sum=CATS.reduce((acc,c)=>acc+Number(r[c.key]),0);
     const cells=CATS.map(c=>{
@@ -1097,12 +1092,7 @@ function showDetail(no){
       }
       return `<td${cls}>${r[c.key]}</td>`;
     }).join('');
-    let totalCls='total-val';
-    if(totalRange && totalRange.max!==totalRange.min){
-      if(sum===totalRange.max) totalCls+=' cell-high';
-      else if(sum===totalRange.min) totalCls+=' cell-low';
-    }
-    return `<tr><td><b>${esc(r.judge)}</b></td>${cells}<td class="total"><span class="${totalCls}" style="font-size:16px">${sum}</span></td><td class="total"><b>${(sum/4).toFixed(2)}</b></td></tr>`;
+    return `<tr><td><b>${esc(r.judge)}</b></td>${cells}<td class="total"><span class="total-val" style="font-size:16px">${sum}</span></td><td class="total"><b>${(sum/4).toFixed(2)}</b></td></tr>`;
   }).join('');
   const avgTotal=rows.length?(rows.reduce((a,r)=>a+CATS.reduce((acc,c)=>acc+Number(r[c.key]),0),0)/rows.length).toFixed(2):'—';
   document.getElementById('modalHost').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()">
